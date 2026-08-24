@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Noctra — Free sleep tracker, no account, no server</title>
+<meta name="description" content="A free, private, client-side sleep tracker. No account, no server, no subscription.">
+<meta name="theme-color" content="#070b09">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -197,6 +202,32 @@
   .breathe-count{font-size:12px; color:var(--muteder); text-align:center; margin-top:4px;}
 
   ::selection{background:var(--accent); color:#04160d;}
+
+  /* tags + notes */
+  .tag-row{display:flex; flex-direction:column; gap:9px;}
+  .tag-check{display:flex; align-items:center; gap:9px; font-size:13.5px; color:var(--muted); cursor:pointer;}
+  .tag-check input{accent-color:var(--accent); width:16px; height:16px;}
+  textarea{background:rgba(255,255,255,0.03); border:1px solid var(--border-2); color:var(--text); font-family:'Inter'; font-size:13.5px; padding:12px 14px; border-radius:12px; resize:vertical; color-scheme:dark;}
+
+  /* trends charts */
+  .chart-card{margin-bottom:20px;}
+  .chart-legend-row{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;}
+  .benchmark-note{font-size:11.5px; color:var(--muteder);}
+
+  /* data section */
+  .data-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px;}
+  @media(max-width:700px){.data-grid{grid-template-columns:1fr;}}
+  .data-card{background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:16px; padding:20px;}
+  .data-card h4{font-size:14.5px; margin-bottom:8px;}
+  .data-card p{font-size:12.5px; color:var(--muteder); margin-bottom:14px; line-height:1.55;}
+  .file-drop{border:1.5px dashed var(--border-2); border-radius:12px; padding:16px; text-align:center; font-size:12.5px; color:var(--muteder); cursor:pointer;}
+  .file-drop:hover{border-color:var(--accent);}
+
+  /* light theme override */
+  body.theme-light{--bg:#f4f7f5; --bg-1:#ebefec; --card:#ffffff; --card-2:#f3f6f4; --border:rgba(10,20,15,0.08); --border-2:rgba(10,20,15,0.14); --text:#0c1512; --muted:#4c5c55; --muteder:#8a9891;}
+  body.theme-light .phone{background:linear-gradient(180deg,#101a15,#0a120e);}
+  body.theme-light .score-ring::before{background:#0a120e;}
+  body.theme-light .phone-screen{background:radial-gradient(ellipse 200px 300px at 50% 0%, rgba(57,217,138,0.15), transparent 60%), #0a120e;}
 </style>
 </head>
 <body>
@@ -207,10 +238,12 @@
     <div class="nav-links">
       <a href="#profile">Profile</a>
       <a href="#track">Track sleep</a>
+      <a href="#trends">Trends</a>
       <a href="#insights">Insights</a>
       <a href="#achievements">Badges</a>
       <a href="#tools">Calculators</a>
       <a href="#winddown">Wind-down</a>
+      <a href="#data">Data</a>
     </div>
     <div id="profilePill"></div>
   </nav>
@@ -269,12 +302,34 @@
             <div style="font-family:'Space Grotesk'; font-size:22px; font-weight:600;" id="activeProfileName">—</div>
           </div>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn btn-ghost btn-sm" id="exportBtn">Export my data (.json)</button>
             <button class="btn btn-ghost btn-sm" id="switchProfileBtn">Switch profile</button>
             <button class="btn btn-danger btn-sm" id="deleteProfileBtn">Delete this profile</button>
           </div>
         </div>
         <div class="note-box ok" style="margin-top:18px;">Saved only in this browser's local storage. Closing the tab won't lose it — clearing your browser data will.</div>
+
+        <div style="margin-top:28px; padding-top:24px; border-top:1px solid var(--border);">
+          <label class="field-label">Your sleep goal</label>
+          <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:10px;">
+            <input type="range" id="goalSlider" min="360" max="600" step="15" value="480" style="flex:1; min-width:160px; accent-color:var(--accent);">
+            <span class="mono" id="goalDisplay" style="font-size:16px; font-weight:700; min-width:56px;">8.0h</span>
+          </div>
+          <p style="font-size:12.5px; color:var(--muteder);">Used for your score, sleep debt, and the recommended range below. Most adults land around 7–9h — that's a general guideline, not a diagnosis.</p>
+        </div>
+
+        <div style="margin-top:24px; padding-top:24px; border-top:1px solid var(--border);">
+          <label class="field-label">Appearance</label>
+          <div class="sound-btn-row" id="accentPicker" style="margin-bottom:12px;">
+            <div class="sound-chip active" data-accent="green">Emerald</div>
+            <div class="sound-chip" data-accent="blue">Blue</div>
+            <div class="sound-chip" data-accent="purple">Violet</div>
+            <div class="sound-chip" data-accent="amber">Amber</div>
+          </div>
+          <div class="sound-btn-row" id="modePicker">
+            <div class="sound-chip active" data-mode="dark">Dark</div>
+            <div class="sound-chip" data-mode="light">Light</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -304,7 +359,16 @@
             <label class="field-label">Wake time</label>
             <div class="time-input-row"><input type="time" id="logWake" value="06:30"></div>
             <label class="field-label">How rested did you feel? <span id="qualVal" class="mono" style="color:var(--accent-2);">4</span>/5</label>
-            <input type="range" min="1" max="5" value="4" id="logQuality" style="width:100%; accent-color:var(--accent); margin:10px 0 22px;">
+            <input type="range" min="1" max="5" value="4" id="logQuality" style="width:100%; accent-color:var(--accent); margin:10px 0 18px;">
+            <label class="field-label">Anything else about today?</label>
+            <div class="tag-row" id="tagRow">
+              <label class="tag-check"><input type="checkbox" id="tagCaffeine"> Caffeine after noon</label>
+              <label class="tag-check"><input type="checkbox" id="tagAlcohol"> Had alcohol</label>
+              <label class="tag-check"><input type="checkbox" id="tagScreens"> Screens right before bed</label>
+              <label class="tag-check"><input type="checkbox" id="tagStress"> High-stress day</label>
+            </div>
+            <label class="field-label" style="margin-top:16px;">Notes (optional)</label>
+            <textarea id="logNotes" placeholder="Dreams, disturbances, anything worth remembering…" maxlength="300" style="width:100%; min-height:64px; margin-bottom:18px;"></textarea>
             <button class="btn btn-primary" id="logSaveBtn" style="width:100%; justify-content:center;">Save last night</button>
             <p id="profileGate1" class="note-box warn" style="display:none;">Create a profile above first — there's nowhere to save this without one.</p>
           </div>
@@ -359,6 +423,31 @@
         <i style="background:#39d98a;"></i>8h+
         <i style="background:rgba(255,255,255,0.045);"></i>no log
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRENDS -->
+<section class="section" id="trends">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">Real chart, real data</div>
+      <h2>Trends</h2>
+      <p>How your score is actually moving over time, and how your duration compares to general sleep guidelines.</p>
+    </div>
+    <div class="card-box reveal chart-card">
+      <div class="chart-legend-row">
+        <label class="field-label" style="margin:0;">Score over time</label>
+        <span class="benchmark-note" id="trendRange">—</span>
+      </div>
+      <svg id="scoreChart" viewBox="0 0 600 180" width="100%" height="180" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="card-box reveal chart-card">
+      <div class="chart-legend-row">
+        <label class="field-label" style="margin:0;">Duration vs. general guideline</label>
+        <span class="benchmark-note">Shaded band = 7–9h, the commonly cited adult range (not personalized medical advice)</span>
+      </div>
+      <svg id="durationChart" viewBox="0 0 600 180" width="100%" height="180" preserveAspectRatio="none"></svg>
     </div>
   </div>
 </section>
@@ -556,6 +645,48 @@
   </div>
 </section>
 
+<!-- DATA: EXPORT / IMPORT / SHARE -->
+<section class="section" id="data" style="background:var(--bg-1); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">Your data, portable</div>
+      <h2>Export, import & share</h2>
+      <p>Since there's no server to sync for you, these make your data genuinely yours to move around.</p>
+    </div>
+    <div class="data-grid reveal">
+      <div class="data-card">
+        <h4>Export</h4>
+        <p>Download a full backup of your current profile.</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" id="exportJsonBtn">Export JSON</button>
+          <button class="btn btn-ghost btn-sm" id="exportCsvBtn">Export CSV</button>
+        </div>
+      </div>
+      <div class="data-card">
+        <h4>Import</h4>
+        <p>Restore a Noctra JSON backup, or bring in a simple CSV (columns like date, bed, wake or duration, quality).</p>
+        <label class="file-drop" for="importFile">Click to choose a .json or .csv file</label>
+        <input type="file" id="importFile" accept=".json,.csv" style="display:none;">
+        <p id="importStatus" style="margin-top:10px; margin-bottom:0;"></p>
+      </div>
+      <div class="data-card">
+        <h4>Weekly recap image</h4>
+        <p>Generates a shareable PNG of your last 7 days — screenshot-ready, made entirely on your device.</p>
+        <button class="btn btn-primary btn-sm" id="recapBtn">Download recap image</button>
+      </div>
+      <div class="data-card">
+        <h4>Bedtime reminder</h4>
+        <p>A browser notification 30 minutes before your usual bedtime (needs this tab open), or a calendar file that reminds you every day regardless.</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" id="notifyBtn">Enable browser reminder</button>
+          <button class="btn btn-ghost btn-sm" id="icsBtn">Download calendar reminder</button>
+        </div>
+        <p id="notifyStatus" style="margin-top:10px; margin-bottom:0;"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- PRIVACY SUMMARY -->
 <section class="section" id="privacy-summary" style="background:var(--bg-1); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
   <div class="wrap">
@@ -584,6 +715,9 @@
       <div class="faq-item"><div class="faq-q"><span>How is the score calculated?</span><span class="plus">+</span></div><div class="faq-a"><p>Mostly duration versus an 8-hour target, plus how rested you said you felt (manual) or how much movement was detected (live tracking). It's a useful estimate, not a lab-grade metric.</p></div></div>
       <div class="faq-item"><div class="faq-q"><span>Will my data sync across my devices?</span><span class="plus">+</span></div><div class="faq-a"><p>No — that needs a server and accounts, which is the tradeoff for staying free with nothing to monetize. Use Export to save a backup file and keep your own copy.</p></div></div>
       <div class="faq-item"><div class="faq-q"><span>Is the local PIN actually secure?</span><span class="plus">+</span></div><div class="faq-a"><p>No. It only separates profiles on a shared device — it is not encryption or real authentication. Don't rely on it to protect sensitive information.</p></div></div>
+      <div class="faq-item"><div class="faq-q"><span>Can it import my Apple Health or Google Fit sleep data?</span><span class="plus">+</span></div><div class="faq-a"><p>Not natively — those export complex formats that would need a much heavier parser than a free static site can reasonably ship. The CSV import is a generic, best-effort reader: it looks for date/bed/wake/duration/quality columns, so it works with a simple spreadsheet export, just not the raw Apple Health XML file.</p></div></div>
+      <div class="faq-item"><div class="faq-q"><span>Will the bedtime reminder notify me if the site is closed?</span><span class="plus">+</span></div><div class="faq-a"><p>The browser notification only fires while this tab stays open — that's a real limitation of a server-free site. The downloadable calendar (.ics) reminder is the more reliable option since it lives in your own calendar app, not this page.</p></div></div>
+      <div class="faq-item"><div class="faq-q"><span>Does "installing" this as an app cost anything or send data anywhere?</span><span class="plus">+</span></div><div class="faq-a"><p>No — "Add to Home Screen" just wraps the same local, server-free page in an app-like window and caches it for offline use. Same storage, same privacy, same zero cost.</p></div></div>
     </div>
   </div>
 </section>
@@ -629,10 +763,11 @@ function saveData(data){
 }
 function uid(){ return 'p_' + Math.random().toString(36).slice(2,10); }
 function getActiveProfile(data){ return data.activeId ? data.profiles[data.activeId] : null; }
+function ensureProfileDefaults(p){ if(!p.goalMinutes) p.goalMinutes = 480; if(!Array.isArray(p.logs)) p.logs = []; return p; }
 
 /* ============ SCORING ============ */
-function scoreForNight(durationMin, quality){
-  const target = 480;
+function scoreForNight(durationMin, quality, goalMinutes){
+  const target = goalMinutes || 480;
   const durationScore = Math.max(0, 100 - Math.abs(target - durationMin) * 0.18);
   const qualityScore = quality * 20;
   return Math.min(100, Math.max(0, Math.round(durationScore * 0.6 + qualityScore * 0.4)));
@@ -656,6 +791,7 @@ const profilePill = document.getElementById('profilePill');
 function renderProfileUI(){
   const data = loadData();
   const active = getActiveProfile(data);
+  if(active) ensureProfileDefaults(active);
   const others = Object.values(data.profiles).filter(p => p.id !== data.activeId);
 
   if(active){
@@ -665,6 +801,8 @@ function renderProfileUI(){
     profilePill.innerHTML = `<span class="pulse-dot" style="width:6px;height:6px;"></span><b>${active.name}</b>`;
     document.getElementById('profileGate1').style.display = 'none';
     document.getElementById('profileGate2').style.display = 'none';
+    document.getElementById('goalSlider').value = active.goalMinutes;
+    document.getElementById('goalDisplay').textContent = (active.goalMinutes/60).toFixed(1) + 'h';
   } else {
     profileLoggedOut.style.display = 'block';
     profileLoggedIn.style.display = 'none';
@@ -710,11 +848,23 @@ document.getElementById('createProfileBtn').addEventListener('click', ()=>{
   if(pin && !/^\d{4,6}$/.test(pin)){ alert('PIN must be 4-6 digits, or leave it blank.'); return; }
   const data = loadData();
   const id = uid();
-  data.profiles[id] = { id, name, pin: pin || null, logs: [] };
+  data.profiles[id] = { id, name, pin: pin || null, logs: [], goalMinutes: 480 };
   data.activeId = id;
   saveData(data);
   nameInput.value = ''; pinInput.value = '';
   renderProfileUI();
+});
+
+document.getElementById('goalSlider').addEventListener('input', (e)=>{
+  document.getElementById('goalDisplay').textContent = (e.target.value/60).toFixed(1) + 'h';
+});
+document.getElementById('goalSlider').addEventListener('change', (e)=>{
+  const data = loadData();
+  const active = getActiveProfile(data);
+  if(!active) return;
+  active.goalMinutes = Number(e.target.value);
+  saveData(data);
+  renderAll();
 });
 
 document.getElementById('switchProfileBtn').addEventListener('click', ()=>{
@@ -735,18 +885,6 @@ document.getElementById('deleteProfileBtn').addEventListener('click', ()=>{
   renderProfileUI();
 });
 
-document.getElementById('exportBtn').addEventListener('click', ()=>{
-  const data = loadData();
-  const active = getActiveProfile(data);
-  if(!active) return;
-  const blob = new Blob([JSON.stringify(active, null, 2)], { type:'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `noctra-${active.name.replace(/\s+/g,'_')}-export.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-});
-
 /* ============ MANUAL LOGGING ============ */
 const qualitySlider = document.getElementById('logQuality');
 document.getElementById('qualVal').textContent = qualitySlider.value;
@@ -756,6 +894,7 @@ document.getElementById('logSaveBtn').addEventListener('click', ()=>{
   const data = loadData();
   const active = getActiveProfile(data);
   if(!active){ document.getElementById('profile').scrollIntoView({behavior:'smooth'}); return; }
+  ensureProfileDefaults(active);
   const bed = document.getElementById('logBed').value;
   const wake = document.getElementById('logWake').value;
   if(!bed || !wake) return;
@@ -764,9 +903,21 @@ document.getElementById('logSaveBtn').addEventListener('click', ()=>{
   let duration = (wh*60+wm) - (bh*60+bm);
   if(duration <= 0) duration += 1440;
   const quality = Number(qualitySlider.value);
-  const score = scoreForNight(duration, quality);
-  active.logs.push({ date: todayISO(), bed, wake, duration, quality, score, source:'manual' });
+  const score = scoreForNight(duration, quality, active.goalMinutes);
+  const tags = {
+    caffeine: document.getElementById('tagCaffeine').checked,
+    alcohol: document.getElementById('tagAlcohol').checked,
+    screens: document.getElementById('tagScreens').checked,
+    stress: document.getElementById('tagStress').checked,
+  };
+  const notes = document.getElementById('logNotes').value.trim().slice(0,300);
+  active.logs.push({ date: todayISO(), bed, wake, duration, quality, score, source:'manual', tags, notes });
   saveData(data);
+  document.getElementById('tagCaffeine').checked = false;
+  document.getElementById('tagAlcohol').checked = false;
+  document.getElementById('tagScreens').checked = false;
+  document.getElementById('tagStress').checked = false;
+  document.getElementById('logNotes').value = '';
   renderAll();
 });
 
@@ -833,11 +984,12 @@ document.getElementById('stopTrackBtn').addEventListener('click', ()=>{
   else if(movementsPerHour < 32) quality = 3;
   else if(movementsPerHour < 50) quality = 2;
   else quality = 1;
-  const score = scoreForNight(durationMin, quality);
 
   const data = loadData();
   const active = getActiveProfile(data);
   if(active){
+    ensureProfileDefaults(active);
+    const score = scoreForNight(durationMin, quality, active.goalMinutes);
     active.logs.push({ date: todayISO(), duration:durationMin, quality, score, source:'motion', movementsPerHour: Math.round(movementsPerHour) });
     saveData(data);
   }
@@ -945,16 +1097,17 @@ function renderAll(){
     <div class="hs"><b class="mono">${currentStreak(logs)}</b><span>Day streak</span></div>
   `;
 
-  renderDebtAndInsights(logs);
+  renderDebtAndInsights(logs, active);
   renderBadges(logs, active);
+  renderTrendCharts(logs, active);
 }
 
 /* ============ SLEEP DEBT ============ */
-function renderDebtAndInsights(logs){
+function renderDebtAndInsights(logs, active){
+  const target = (active && active.goalMinutes) || 480;
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-13);
   const cutoffStr = todayISO(cutoff);
   const recent = logs.filter(l => l.date >= cutoffStr);
-  const target = 480;
 
   if(!recent.length){
     document.getElementById('debtHours').textContent = '--';
@@ -970,7 +1123,7 @@ function renderDebtAndInsights(logs){
     document.getElementById('debtAvg').textContent = (avgMin/60).toFixed(1) + 'h';
     document.getElementById('debtNights').textContent = recent.length;
     document.getElementById('debtBar').style.width = Math.min(100, (totalDeficit/(target*0.6))*100) + '%';
-    document.getElementById('debtNote').textContent = `Based on the ${recent.length} night(s) you logged in the last 14 days. Rough estimate, not a clinical measure — unlogged nights aren't counted either way.`;
+    document.getElementById('debtNote').textContent = `Based on the ${recent.length} night(s) you logged in the last 14 days, against your ${(target/60).toFixed(1)}h goal. Rough estimate, not a clinical measure.`;
   }
 
   document.getElementById('insightsList').innerHTML = generateInsights(logs);
@@ -1021,6 +1174,24 @@ function generateInsights(logs){
   }
 
   const avgScore = Math.round(logs.reduce((a,l)=>a+l.score,0)/logs.length);
+  const tagKeys = [
+    { key:'caffeine', label:'afternoon/evening caffeine', icon:'☕' },
+    { key:'alcohol', label:'alcohol', icon:'🍷' },
+    { key:'screens', label:'screens before bed', icon:'📱' },
+    { key:'stress', label:'a high-stress day', icon:'😣' },
+  ];
+  tagKeys.forEach(tk=>{
+    const withTag = logs.filter(l => l.tags && l.tags[tk.key]);
+    const withoutTag = logs.filter(l => l.tags && !l.tags[tk.key]);
+    if(withTag.length >= 2 && withoutTag.length >= 2){
+      const avgWith = Math.round(withTag.reduce((a,l)=>a+l.score,0)/withTag.length);
+      const avgWithout = Math.round(withoutTag.reduce((a,l)=>a+l.score,0)/withoutTag.length);
+      if(Math.abs(avgWith-avgWithout) >= 4){
+        items.push(`<div class="insight-item"><div class="insight-icon">${tk.icon}</div><div class="insight-text">Nights with ${tk.label} average <b>${avgWith}</b> vs <b>${avgWithout}</b> without — logged ${withTag.length} time${withTag.length>1?'s':''}.</div></div>`);
+      }
+    }
+  });
+
   items.push(`<div class="insight-item"><div class="insight-icon">📈</div><div class="insight-text">Average score across all ${logs.length} logged nights: <b>${avgScore}</b>.</div></div>`);
 
   return items.join('');
@@ -1067,6 +1238,55 @@ function renderBadges(logs){
       <div class="b-desc">${b.desc}</div>
     </div>
   `).join('');
+}
+
+/* ============ TREND CHARTS ============ */
+function renderTrendCharts(logs, active){
+  const scoreEl = document.getElementById('scoreChart');
+  const durEl = document.getElementById('durationChart');
+  const W = 600, H = 180, PAD = 20;
+  const goalMin = (active && active.goalMinutes) || 480;
+
+  if(logs.length < 2){
+    scoreEl.innerHTML = `<text x="300" y="94" text-anchor="middle" fill="#59685f" font-size="13" font-family="Inter">Log at least 2 nights to see a trend line</text>`;
+    durEl.innerHTML = `<text x="300" y="94" text-anchor="middle" fill="#59685f" font-size="13" font-family="Inter">Log at least 2 nights to see this chart</text>`;
+    document.getElementById('trendRange').textContent = '—';
+    return;
+  }
+
+  const recent = logs.slice(-30);
+  document.getElementById('trendRange').textContent = `Last ${recent.length} logged night${recent.length>1?'s':''}`;
+
+  // score line chart, 0-100 fixed scale
+  const stepX = (W-PAD*2) / Math.max(1, recent.length-1);
+  const scoreY = (v) => H-PAD - (v/100)*(H-PAD*2);
+  const scorePts = recent.map((l,i)=> `${PAD+i*stepX},${scoreY(l.score)}`).join(' ');
+  const avgScore = recent.reduce((a,l)=>a+l.score,0)/recent.length;
+  scoreEl.innerHTML = `
+    <line x1="${PAD}" y1="${scoreY(avgScore)}" x2="${W-PAD}" y2="${scoreY(avgScore)}" stroke="#59685f" stroke-dasharray="3 4" stroke-width="1"/>
+    <polyline points="${scorePts}" fill="none" stroke="#39d98a" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${recent.map((l,i)=>`<circle cx="${PAD+i*stepX}" cy="${scoreY(l.score)}" r="3" fill="#7cffc4"><title>${l.date}: ${l.score}</title></circle>`).join('')}
+    <text x="${W-PAD}" y="${scoreY(avgScore)-6}" text-anchor="end" fill="#59685f" font-size="10" font-family="JetBrains Mono">avg ${Math.round(avgScore)}</text>
+  `;
+
+  // duration bar chart with 7-9h benchmark band
+  const maxDur = Math.max(600, ...recent.map(l=>l.duration));
+  const durY = (v) => H-PAD - (v/maxDur)*(H-PAD*2);
+  const bandTop = durY(540), bandBottom = durY(420);
+  const barW = Math.min(18, (W-PAD*2)/recent.length - 4);
+  durEl.innerHTML = `
+    <rect x="${PAD}" y="${bandTop}" width="${W-PAD*2}" height="${bandBottom-bandTop}" fill="#39d98a" opacity="0.08"/>
+    <line x1="${PAD}" y1="${bandTop}" x2="${W-PAD}" y2="${bandTop}" stroke="#39d98a" stroke-dasharray="2 4" stroke-width="1" opacity="0.5"/>
+    <line x1="${PAD}" y1="${bandBottom}" x2="${W-PAD}" y2="${bandBottom}" stroke="#39d98a" stroke-dasharray="2 4" stroke-width="1" opacity="0.5"/>
+    <line x1="${PAD}" y1="${durY(goalMin)}" x2="${W-PAD}" y2="${durY(goalMin)}" stroke="#7cffc4" stroke-width="1.2"/>
+    ${recent.map((l,i)=>{
+      const x = PAD+i*stepX-barW/2;
+      const y = durY(l.duration);
+      const h = (H-PAD)-y;
+      const c = l.duration < 360 ? '#c65b45' : (l.duration < goalMin ? '#e2794f' : '#39d98a');
+      return `<rect x="${x}" y="${y}" width="${barW}" height="${Math.max(1,h)}" rx="2" fill="${c}"><title>${l.date}: ${(l.duration/60).toFixed(1)}h</title></rect>`;
+    }).join('')}
+  `;
 }
 
 /* ============ BEDTIME CALCULATOR ============ */
@@ -1277,6 +1497,238 @@ document.getElementById('breatheToggleBtn').addEventListener('click', ()=>{
   if(breatheActive){ stopBreathing(); }
   else{ breatheActive = true; breatheStep = 0; document.getElementById('breatheToggleBtn').textContent = 'Stop'; runBreatheStep(); }
 });
+
+/* ============ THEME / ACCENT ============ */
+const ACCENT_MAP = {
+  green: { a:'#39d98a', a2:'#7cffc4' },
+  blue: { a:'#3ea0ef', a2:'#8fd1ff' },
+  purple: { a:'#9a7bf0', a2:'#c9b6ff' },
+  amber: { a:'#e0a83e', a2:'#ffd479' },
+};
+function applyTheme(prefs){
+  const acc = ACCENT_MAP[prefs.accent] || ACCENT_MAP.green;
+  document.documentElement.style.setProperty('--accent', acc.a);
+  document.documentElement.style.setProperty('--accent-2', acc.a2);
+  document.documentElement.style.setProperty('--accent-dim', acc.a + '24');
+  document.body.classList.toggle('theme-light', prefs.mode === 'light');
+  document.querySelectorAll('#accentPicker .sound-chip').forEach(c=> c.classList.toggle('active', c.dataset.accent === (prefs.accent||'green')));
+  document.querySelectorAll('#modePicker .sound-chip').forEach(c=> c.classList.toggle('active', c.dataset.mode === (prefs.mode||'dark')));
+}
+function loadThemePrefs(){
+  try{ return JSON.parse(localStorage.getItem('noctra_theme') || '{}'); }catch(e){ return {}; }
+}
+function saveThemePrefs(p){ try{ localStorage.setItem('noctra_theme', JSON.stringify(p)); }catch(e){} }
+let themePrefs = Object.assign({accent:'green', mode:'dark'}, loadThemePrefs());
+applyTheme(themePrefs);
+document.querySelectorAll('#accentPicker .sound-chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{ themePrefs.accent = chip.dataset.accent; saveThemePrefs(themePrefs); applyTheme(themePrefs); });
+});
+document.querySelectorAll('#modePicker .sound-chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{ themePrefs.mode = chip.dataset.mode; saveThemePrefs(themePrefs); applyTheme(themePrefs); });
+});
+
+/* ============ EXPORT ============ */
+document.getElementById('exportJsonBtn').addEventListener('click', ()=>{
+  const data = loadData();
+  const active = getActiveProfile(data);
+  if(!active) return;
+  const blob = new Blob([JSON.stringify(active, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `noctra-${active.name.replace(/\s+/g,'_')}-export.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('exportCsvBtn').addEventListener('click', ()=>{
+  const data = loadData();
+  const active = getActiveProfile(data);
+  if(!active || !active.logs.length) return;
+  const header = 'date,bed,wake,duration_min,quality,score,source,caffeine,alcohol,screens,stress,notes';
+  const rows = active.logs.map(l => [
+    l.date, l.bed||'', l.wake||'', l.duration, l.quality, l.score, l.source,
+    l.tags?.caffeine?'1':'0', l.tags?.alcohol?'1':'0', l.tags?.screens?'1':'0', l.tags?.stress?'1':'0',
+    '"' + (l.notes||'').replace(/"/g,'""') + '"'
+  ].join(','));
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type:'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `noctra-${active.name.replace(/\s+/g,'_')}-export.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* ============ IMPORT ============ */
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  const statusEl = document.getElementById('importStatus');
+  if(!file) return;
+  const data = loadData();
+  const active = getActiveProfile(data);
+  if(!active){ statusEl.innerHTML = '<span style="color:#f0a880;">Create/select a profile first.</span>'; e.target.value=''; return; }
+  ensureProfileDefaults(active);
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      if(file.name.toLowerCase().endsWith('.json')){
+        const parsed = JSON.parse(reader.result);
+        const incoming = Array.isArray(parsed.logs) ? parsed.logs : (Array.isArray(parsed) ? parsed : []);
+        let added = 0;
+        incoming.forEach(l=>{
+          if(l && l.date && typeof l.duration === 'number'){ active.logs.push(l); added++; }
+        });
+        saveData(data);
+        statusEl.innerHTML = `<span style="color:#7cffc4;">Imported ${added} night(s) from JSON.</span>`;
+      } else {
+        const text = reader.result;
+        const lines = text.split(/\r?\n/).filter(l=>l.trim().length);
+        const headers = lines[0].split(',').map(h=>h.trim().toLowerCase());
+        const idx = (name) => headers.findIndex(h=>h.includes(name));
+        const dateIdx = idx('date'); const bedIdx = idx('bed'); const wakeIdx = idx('wake');
+        const durIdx = headers.findIndex(h=>h.includes('duration')); const qualIdx = idx('quality');
+        let added = 0;
+        for(let i=1;i<lines.length;i++){
+          const cols = lines[i].split(',');
+          const dateVal = dateIdx>=0 ? cols[dateIdx]?.trim() : null;
+          if(!dateVal) continue;
+          let duration = durIdx>=0 ? Number(cols[durIdx]) : null;
+          if((!duration || isNaN(duration)) && bedIdx>=0 && wakeIdx>=0){
+            const bed = cols[bedIdx]?.trim(), wake = cols[wakeIdx]?.trim();
+            if(bed && wake && bed.includes(':') && wake.includes(':')){
+              const [bh,bm]=bed.split(':').map(Number), [wh,wm]=wake.split(':').map(Number);
+              duration = (wh*60+wm)-(bh*60+bm); if(duration<=0) duration+=1440;
+            }
+          }
+          if(!duration || isNaN(duration)) continue;
+          const quality = qualIdx>=0 ? (Number(cols[qualIdx])||3) : 3;
+          const score = scoreForNight(duration, quality, active.goalMinutes);
+          active.logs.push({ date:dateVal, bed: bedIdx>=0?cols[bedIdx]?.trim():undefined, wake: wakeIdx>=0?cols[wakeIdx]?.trim():undefined, duration, quality, score, source:'import' });
+          added++;
+        }
+        saveData(data);
+        statusEl.innerHTML = added
+          ? `<span style="color:#7cffc4;">Imported ${added} night(s) from CSV.</span>`
+          : `<span style="color:#f0a880;">Couldn't find recognizable columns (date + duration, or date + bed + wake). This is a best-effort generic CSV import, not a native Apple Health/Google Fit parser.</span>`;
+      }
+      renderAll();
+    }catch(err){
+      statusEl.innerHTML = '<span style="color:#f0a880;">Could not read that file — check it\'s a valid Noctra JSON export or a simple CSV.</span>';
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+/* ============ WEEKLY RECAP IMAGE ============ */
+document.getElementById('recapBtn').addEventListener('click', ()=>{
+  const data = loadData();
+  const active = getActiveProfile(data);
+  if(!active || !active.logs.length){ alert('Log at least one night first.'); return; }
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-6);
+  const cutoffStr = todayISO(cutoff);
+  const week = active.logs.filter(l=>l.date>=cutoffStr).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!week.length){ alert('No logs in the last 7 days yet.'); return; }
+
+  const c = document.createElement('canvas');
+  c.width = 800; c.height = 1000;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#070b09'; ctx.fillRect(0,0,800,1000);
+  const acc = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#39d98a';
+  ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(60,64,8,0,7); ctx.fill();
+  ctx.fillStyle = '#edf3ef'; ctx.font = '700 30px sans-serif'; ctx.fillText('Noctra', 80, 74);
+  ctx.fillStyle = '#93a69f'; ctx.font = '15px sans-serif'; ctx.fillText(active.name + "'s week", 60, 110);
+
+  const avg = Math.round(week.reduce((a,l)=>a+l.score,0)/week.length);
+  const avgDur = week.reduce((a,l)=>a+l.duration,0)/week.length/60;
+  const best = week.reduce((a,b)=> b.score>a.score?b:a);
+
+  ctx.fillStyle = acc; ctx.font = '700 130px sans-serif'; ctx.fillText(avg, 60, 300);
+  ctx.fillStyle = '#59685f'; ctx.font = '16px sans-serif'; ctx.fillText('AVG SLEEP SCORE THIS WEEK', 62, 330);
+
+  ctx.fillStyle = '#93a69f'; ctx.font = '15px sans-serif';
+  ctx.fillText(`${week.length} nights logged`, 60, 400);
+  ctx.fillText(`Avg duration: ${avgDur.toFixed(1)}h`, 60, 430);
+  ctx.fillText(`Best night: ${best.date} (score ${best.score})`, 60, 460);
+  ctx.fillText(`Current streak: ${currentStreak(active.logs)} days`, 60, 490);
+
+  const barY = 560, barH = 26, gap = 12, maxBarW = 680;
+  week.forEach((l,i)=>{
+    const y = barY + i*(barH+gap);
+    ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(60, y, maxBarW, barH);
+    ctx.fillStyle = acc; ctx.fillRect(60, y, maxBarW*(l.score/100), barH);
+    ctx.fillStyle = '#edf3ef'; ctx.font = '13px monospace'; ctx.fillText(`${l.date}  ${l.score}`, 66, y+18);
+  });
+
+  ctx.fillStyle = '#59685f'; ctx.font = '13px sans-serif';
+  ctx.fillText('Free, private, made with Noctra — no account, no server', 60, 960);
+
+  c.toBlob((blob)=>{
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `noctra-recap-${todayISO()}.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+});
+
+/* ============ BEDTIME REMINDER ============ */
+let reminderTimeout = null;
+document.getElementById('notifyBtn').addEventListener('click', async ()=>{
+  const statusEl = document.getElementById('notifyStatus');
+  if(!('Notification' in window)){ statusEl.innerHTML = '<span style="color:#f0a880;">This browser doesn\'t support notifications.</span>'; return; }
+  const perm = await Notification.requestPermission();
+  if(perm !== 'granted'){ statusEl.innerHTML = '<span style="color:#f0a880;">Permission denied.</span>'; return; }
+  const bedInput = document.getElementById('logBed');
+  const bedVal = bedInput.value || '22:30';
+  const [bh,bm] = bedVal.split(':').map(Number);
+  const now = new Date();
+  let target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), bh, bm);
+  target.setMinutes(target.getMinutes()-30);
+  if(target <= now) target.setDate(target.getDate()+1);
+  const ms = target - now;
+  clearTimeout(reminderTimeout);
+  reminderTimeout = setTimeout(()=>{
+    new Notification('Wind-down time', { body: 'Bedtime is in 30 minutes — this is a good moment to start your wind-down routine.' });
+  }, ms);
+  statusEl.innerHTML = `<span style="color:#7cffc4;">Reminder set for ${target.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} — keep this tab open.</span>`;
+});
+
+document.getElementById('icsBtn').addEventListener('click', ()=>{
+  const bedInput = document.getElementById('logBed');
+  const bedVal = bedInput.value || '22:30';
+  const [bh,bm] = bedVal.split(':').map(Number);
+  const now = new Date();
+  let target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), bh, bm);
+  target.setMinutes(target.getMinutes()-30);
+  if(target <= now) target.setDate(target.getDate()+1);
+  const pad = (n)=> n.toString().padStart(2,'0');
+  const dt = `${target.getFullYear()}${pad(target.getMonth()+1)}${pad(target.getDate())}T${pad(target.getHours())}${pad(target.getMinutes())}00`;
+  const ics = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Noctra//Bedtime Reminder//EN',
+    'BEGIN:VEVENT',
+    `UID:${uid()}@noctra`,
+    `DTSTART:${dt}`,
+    'DURATION:PT10M',
+    'RRULE:FREQ=DAILY',
+    'SUMMARY:Wind-down time (Noctra)',
+    'DESCRIPTION:30 minutes until your bedtime — start winding down.',
+    'END:VEVENT','END:VCALENDAR'
+  ].join('\r\n');
+  const blob = new Blob([ics], { type:'text/calendar' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'noctra-bedtime-reminder.ics';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* ============ SERVICE WORKER (PWA) ============ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{ /* fails silently on file:// or unsupported hosts */ });
+  });
+}
 
 /* ============ FAQ ============ */
 document.querySelectorAll('.faq-item').forEach(item=>{

@@ -1,0 +1,14 @@
+{
+  "name": "Noctra — Free Sleep Tracker",
+  "short_name": "Noctra",
+  "description": "A free, private, client-side sleep tracker. No account, no server, no subscription.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#070b09",
+  "theme_color": "#070b09",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
